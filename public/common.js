@@ -1,7 +1,8 @@
 // BuildMatrix common helpers (shared across pages)
 
-const isLocalHost = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-const API_URL = isLocalHost && String(location.port) && String(location.port) !== "5000" ? "http://localhost:5000/api" : "/api";
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/api'
+    : 'https://buildmatrix-vonq.onrender.com/api';
 
 function safeJsonParse(value, fallback = null) {
   try {
