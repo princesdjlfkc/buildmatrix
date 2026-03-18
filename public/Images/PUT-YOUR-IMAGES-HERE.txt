@@ -1,0 +1,5 @@
+Copy your 223 images into this folder.
+Example path:
+public/Images/AMD Ryzen 5 5600G.jpg
+
+Then open http://localhost:5000/ and images will load.

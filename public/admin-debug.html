@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuildMatrix Admin Panel</title>
+  <link rel="stylesheet" href="admin-style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-wrapper">
+    <!-- Header -->
+    <header class="admin-header">
+      <h1>
+        <i class="fas fa-crown"></i>
+        BuildMatrix Admin
+      </h1>
+      <div class="admin-header-actions">
+        <span id="adminName" style="font-weight: 500;"></span>
+        <button class="admin-btn admin-btn-outline" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+        <a href="index.html" class="admin-btn admin-btn-primary">
+          <i class="fas fa-arrow-left"></i> Back to Site
+        </a>
+      </div>
+    </header>
+
+    <!-- Message Container -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <h3 id="totalUsers">-</h3>
+          <p>Total Users</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-folder"></i>
+        </div>
+        <div class="stat-content">
+          <h3 id="totalBuilds">-</h3>
+          <p>Saved Builds</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-microchip"></i>
+        </div>
+        <div class="stat-content">
+          <h3 id="totalProducts">-</h3>
+          <p>Total Products</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stat-content">
+          <h3 id="newUsers">-</h3>
+          <p>New Users (7d)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('dashboard')">
+        <i class="fas fa-chart-pie"></i> Dashboard
+      </button>
+      <button class="admin-tab" onclick="switchTab('products')">
+        <i class="fas fa-microchip"></i> Products
+      </button>
+      <button class="admin-tab" onclick="switchTab('users')">
+        <i class="fas fa-users"></i> Users
+      </button>
+      <button class="admin-tab" onclick="switchTab('builds')">
+        <i class="fas fa-folder"></i> Builds
+      </button>
+    </div>
+
+    <!-- Dashboard Panel -->
+    <div id="dashboardPanel" class="admin-panel active">
+      <div class="panel-header">
+        <h2><i class="fas fa-chart-line"></i> Overview</h2>
+      </div>
+      <div style="padding: 20px; text-align: center; color: var(--admin-text-muted);">
+        <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--admin-success); margin-bottom: 16px;"></i>
+        <h3>Welcome to BuildMatrix Admin!</h3>
+        <p>Use the tabs above to manage products, users, and builds.</p>
+      </div>
+    </div>
+
+    <!-- Products Panel -->
+    <div id="productsPanel" class="admin-panel">
+      <div class="panel-header">
+        <h2><i class="fas fa-microchip"></i> Products</h2>
+        <button class="admin-btn admin-btn-primary" onclick="showAddProductModal()">
+          <i class="fas fa-plus"></i> Add Product
+        </button>
+      </div>
+      
+      <div class="search-bar">
+        <input type="text" id="productSearch" placeholder="Search products by name, category, or ID...">
+      </div>
+
+      <div id="productsList" class="loading">
+        <i class="fas fa-spinner"></i> Loading products...
+      </div>
+    </div>
+
+    <!-- Users Panel -->
+    <div id="usersPanel" class="admin-panel">
+      <div class="panel-header">
+        <h2><i class="fas fa-users"></i> Users</h2>
+      </div>
+      
+      <div class="search-bar">
+        <input type="text" id="userSearch" placeholder="Search users by name or email...">
+      </div>
+
+      <div id="usersList" class="loading">
+        <i class="fas fa-spinner"></i> Loading users...
+      </div>
+    </div>
+
+    <!-- Builds Panel -->
+    <div id="buildsPanel" class="admin-panel">
+      <div class="panel-header">
+        <h2><i class="fas fa-folder"></i> Builds</h2>
+      </div>
+      
+      <div class="search-bar">
+        <input type="text" id="buildSearch" placeholder="Search builds by name or user...">
+      </div>
+
+      <div id="buildsList" class="loading">
+        <i class="fas fa-spinner"></i> Loading builds...
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Product</h3>
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+      </div>
+      <form id="productForm" onsubmit="saveProduct(event)">
+        <input type="hidden" id="productId">
+        
+        <div class="form-group">
+          <label>Product ID *</label>
+          <input type="text" id="productIdField" required placeholder="e.g., amd-ryzen-5-5600g">
+        </div>
+        
+        <div class="form-group">
+          <label>Product Name *</label>
+          <input type="text" id="productName" required placeholder="e.g., AMD Ryzen 5 5600G">
+        </div>
+        
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="productCategory" required>
+            <option value="">Select Category</option>
+            <option value="cpu">CPU / Processor</option>
+            <option value="gpu">Graphics Card (GPU)</option>
+            <option value="motherboard">Motherboard</option>
+            <option value="ram">RAM / Memory</option>
+            <option value="ssd">SSD</option>
+            <option value="hdd">HDD</option>
+            <option value="psu">Power Supply (PSU)</option>
+            <option value="case">PC Case</option>
+            <option value="monitor">Monitor</option>
+            <option value="keyboard">Keyboard</option>
+            <option value="mouse">Mouse</option>
+            <option value="fan">Case Fan</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Price (₱) *</label>
+          <input type="number" id="productPrice" required min="0" step="1" placeholder="e.g., 7299">
+        </div>
+        
+        <div class="form-group">
+          <label>Tier / Segment</label>
+          <select id="productTier">
+            <option value="budget">Budget</option>
+            <option value="performance">Performance</option>
+            <option value="enthusiast">Enthusiast / High-End</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Specifications</label>
+          <textarea id="productSpecs" rows="2" placeholder="e.g., 6C/12T, Vega 7, AM4"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Image Path</label>
+          <input type="text" id="productImg" placeholder="/Images/product.jpg" value="/Images/placeholder.jpg">
+        </div>
+        
+        <div class="form-group">
+          <label>Rating (0-5)</label>
+          <input type="number" id="productRating" min="0" max="5" step="0.1" value="4.5">
+        </div>
+        
+        <div class="form-group">
+          <label>Rating Count</label>
+          <input type="number" id="productRatingCount" min="0" value="100">
+        </div>
+        
+        <div class="form-group">
+          <label>Meta Data (JSON)</label>
+          <textarea id="productMeta" rows="3" placeholder='{"perf": "80", "tdp": "65", "socket": "AM4"}'></textarea>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="admin-btn admin-btn-outline" onclick="closeModal()" style="color: var(--admin-text);">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // FIXED: Check if user is logged in and is admin
+    async function checkAdmin() {
+      try {
+        // First check localStorage
+        const userStr = localStorage.getItem('user');
+        console.log('Raw user from localStorage:', userStr);
+        
+        if (!userStr) {
+          console.log('No user in localStorage, redirecting...');
+          window.location.href = 'index.html';
+          return;
+        }
+
+        let user;
+        try {
+          user = JSON.parse(userStr);
+        } catch (e) {
+          console.log('Failed to parse user from localStorage');
+          window.location.href = 'index.html';
+          return;
+        }
+
+        // Check if user is admin via API
+        console.log('Fetching /api/auth/me...');
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          console.log('Auth API returned:', response.status);
+          window.location.href = 'index.html';
+          return;
+        }
+
+        const data = await response.json();
+        console.log('Auth API response:', data);
+
+        // Check if data has is_admin property
+        if (!data || !data.is_admin) {
+          console.log('User is not admin or missing is_admin field');
+          window.location.href = 'index.html';
+          return;
+        }
+
+        // Display user name
+        document.getElementById('adminName').textContent = `Welcome, ${data.name || user.name || 'Admin'}`;
+        
+        // Load dashboard stats
+        loadStats();
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        window.location.href = 'index.html';
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/admin/stats', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('totalUsers').textContent = data.stats.totalUsers;
+          document.getElementById('totalBuilds').textContent = data.stats.totalBuilds;
+          document.getElementById('totalProducts').textContent = data.stats.totalProducts;
+          document.getElementById('newUsers').textContent = data.stats.newUsersThisWeek;
+        }
+      } catch (err) {
+        showMessage('Failed to load stats', 'error');
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.admin-tab').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.querySelectorAll('.admin-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(tab + 'Panel').classList.add('active');
+      
+      if (tab === 'products') loadProducts();
+      if (tab === 'users') loadUsers();
+      if (tab === 'builds') loadBuilds();
+    }
+
+    async function loadProducts() {
+      const productsList = document.getElementById('productsList');
+      productsList.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading products...</div>';
+      
+      try {
+        const response = await fetch('/api/admin/products', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.products) {
+          displayProducts(data.products);
+        } else {
+          productsList.innerHTML = '<div class="error-message">Failed to load products</div>';
+        }
+      } catch (err) {
+        productsList.innerHTML = '<div class="error-message">Error loading products</div>';
+      }
+    }
+
+    function displayProducts(products) {
+      const productsList = document.getElementById('productsList');
+      
+      if (products.length === 0) {
+        productsList.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--admin-text-muted);"><i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 16px;"></i><h3>No Products Found</h3><p>Click "Add Product" to create your first product.</p></div>';
+        return;
+      }
+
+      let html = '<div class="admin-table-container"><table class="admin-table">';
+      html += '<thead><tr><th>Image</th><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Tier</th><th>Rating</th><th>Actions</th></tr></thead><tbody>';
+      
+      products.slice(0, 50).forEach(p => {
+        const tierClass = p.tier === 'budget' ? 'badge-budget' : (p.tier === 'performance' ? 'badge-performance' : 'badge-enthusiast');
+        html += `<tr>
+          <td><img src="${p.img || '/Images/placeholder.jpg'}" class="product-image" onerror="this.src='/Images/placeholder.jpg'"></td>
+          <td><code>${p.id || ''}</code></td>
+          <td><strong>${p.name || ''}</strong></td>
+          <td><span class="badge" style="background: var(--admin-hover);">${p.category || ''}</span></td>
+          <td><strong>₱${Number(p.price).toLocaleString()}</strong></td>
+          <td><span class="badge ${tierClass}">${p.tier || 'budget'}</span></td>
+          <td>${p.rating || '0'} ⭐ (${p.ratingCount || 0})</td>
+          <td>
+            <button class="btn-icon btn-edit" onclick="editProduct('${p.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+            <button class="btn-icon btn-delete" onclick="deleteProduct('${p.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+      });
+      
+      html += '</tbody></table></div>';
+      if (products.length > 50) {
+        html += '<div style="text-align: center; margin-top: 16px; color: var(--admin-text-muted);">Showing 50 of ' + products.length + ' products</div>';
+      }
+      productsList.innerHTML = html;
+    }
+
+    function showAddProductModal() {
+      document.getElementById('modalTitle').textContent = 'Add New Product';
+      document.getElementById('productForm').reset();
+      document.getElementById('productId').value = '';
+      document.getElementById('productModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('productModal').style.display = 'none';
+    }
+
+    async function saveProduct(event) {
+      event.preventDefault();
+      
+      const productData = {
+        id: document.getElementById('productIdField').value,
+        name: document.getElementById('productName').value,
+        category: document.getElementById('productCategory').value,
+        price: Number(document.getElementById('productPrice').value),
+        tier: document.getElementById('productTier').value,
+        specs: document.getElementById('productSpecs').value,
+        img: document.getElementById('productImg').value || '/Images/placeholder.jpg',
+        rating: Number(document.getElementById('productRating').value),
+        ratingCount: Number(document.getElementById('productRatingCount').value),
+        meta: {}
+      };
+
+      try {
+        const metaText = document.getElementById('productMeta').value;
+        if (metaText) {
+          productData.meta = JSON.parse(metaText);
+        }
+      } catch (e) {
+        alert('Invalid JSON in meta field');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(productData)
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage('Product added successfully!', 'success');
+          closeModal();
+          loadProducts();
+        } else {
+          showMessage(data.error || 'Failed to add product', 'error');
+        }
+      } catch (err) {
+        showMessage('Error adding product', 'error');
+      }
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm('Are you sure you want to delete this product?')) return;
+      
+      try {
+        const response = await fetch(`/api/admin/products/${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage('Product deleted successfully', 'success');
+          loadProducts();
+        } else {
+          showMessage(data.error || 'Failed to delete product', 'error');
+        }
+      } catch (err) {
+        showMessage('Error deleting product', 'error');
+      }
+    }
+
+    async function loadUsers() {
+      const usersList = document.getElementById('usersList');
+      usersList.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading users...</div>';
+      
+      try {
+        const response = await fetch('/api/admin/users', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.users) {
+          displayUsers(data.users);
+        } else {
+          usersList.innerHTML = '<div class="error-message">Failed to load users</div>';
+        }
+      } catch (err) {
+        usersList.innerHTML = '<div class="error-message">Error loading users</div>';
+      }
+    }
+
+    function displayUsers(users) {
+      const usersList = document.getElementById('usersList');
+      
+      if (users.length === 0) {
+        usersList.innerHTML = '<div style="text-align: center; padding: 40px;">No users found</div>';
+        return;
+      }
+
+      let html = '<div class="admin-table-container"><table class="admin-table">';
+      html += '<thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead><tbody>';
+      
+      users.forEach(u => {
+        html += `<tr>
+          <td>${u.id}</td>
+          <td><strong>${u.name || ''}</strong></td>
+          <td>${u.email}</td>
+          <td><span class="badge ${u.is_admin ? 'badge-admin' : 'badge-user'}">${u.is_admin ? 'Admin' : 'User'}</span></td>
+          <td>${new Date(u.created_at).toLocaleDateString()}</td>
+          <td>
+            <button class="btn-icon btn-edit" onclick="toggleAdmin(${u.id})" title="Toggle Admin">
+              <i class="fas fa-${u.is_admin ? 'user' : 'crown'}"></i>
+            </button>
+          </td>
+        </tr>`;
+      });
+      
+      html += '</tbody></table></div>';
+      usersList.innerHTML = html;
+    }
+
+    async function toggleAdmin(userId) {
+      try {
+        const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
+          method: 'PUT',
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage(data.message, 'success');
+          loadUsers();
+        } else {
+          showMessage(data.error || 'Failed to update user', 'error');
+        }
+      } catch (err) {
+        showMessage('Error updating user', 'error');
+      }
+    }
+
+    async function loadBuilds() {
+      const buildsList = document.getElementById('buildsList');
+      buildsList.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading builds...</div>';
+      
+      try {
+        const response = await fetch('/api/admin/builds', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.builds) {
+          displayBuilds(data.builds);
+        } else {
+          buildsList.innerHTML = '<div class="error-message">Failed to load builds</div>';
+        }
+      } catch (err) {
+        buildsList.innerHTML = '<div class="error-message">Error loading builds</div>';
+      }
+    }
+
+    function displayBuilds(builds) {
+      const buildsList = document.getElementById('buildsList');
+      
+      if (builds.length === 0) {
+        buildsList.innerHTML = '<div style="text-align: center; padding: 40px;">No builds found</div>';
+        return;
+      }
+
+      let html = '<div class="admin-table-container"><table class="admin-table">';
+      html += '<thead><tr><th>Build Name</th><th>User</th><th>Email</th><th>Total</th><th>Items</th><th>Date</th></tr></thead><tbody>';
+      
+      builds.forEach(b => {
+        const itemCount = b.items ? b.items.length : 0;
+        html += `<tr>
+          <td><strong>${b.name || 'Untitled'}</strong></td>
+          <td>${b.user_name || 'Unknown'}</td>
+          <td>${b.email || ''}</td>
+          <td><strong>₱${Number(b.total).toLocaleString()}</strong></td>
+          <td>${itemCount} parts</td>
+          <td>${new Date(b.created_at).toLocaleDateString()}</td>
+        </tr>`;
+      });
+      
+      html += '</tbody></table></div>';
+      buildsList.innerHTML = html;
+    }
+
+    function showMessage(msg, type) {
+      const container = document.getElementById('messageContainer');
+      container.innerHTML = `<div class="${type}-message">${msg}</div>`;
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 3000);
+    }
+
+    function logout() {
+      localStorage.removeItem('user');
+      window.location.href = 'index.html';
+    }
+
+    // Dark mode sync with main site
+    function initDarkMode() {
+      const isDark = localStorage.getItem('buildmatrix-dark-mode') === 'dark';
+      if (isDark) {
+        document.body.classList.add('dark-mode');
+      }
+    }
+
+    // Search functions
+    function searchProducts() {
+      const search = document.getElementById('productSearch').value.toLowerCase();
+      // Implement search
+    }
+
+    function searchUsers() {
+      const search = document.getElementById('userSearch').value.toLowerCase();
+      // Implement search
+    }
+
+    function searchBuilds() {
+      const search = document.getElementById('buildSearch').value.toLowerCase();
+      // Implement search
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initDarkMode();
+      checkAdmin();
+    });
+  </script>
+</body>
+</html>

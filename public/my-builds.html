@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BuildMatrix - My Builds</title>
+  
+  <link rel="stylesheet" href="style.css" />
+  <!-- PWA Support -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BuildMatrix">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- App scripts -->
+  <script src="common.js" defer></script>
+  <script src="builds.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <div class="header-left">
+          <a class="logo" href="index.html">
+            <i class="fas fa-tools"></i>
+            <h1>BuildMatrix</h1>
+          </a>
+          
+          <nav class="top-nav" aria-label="Primary">
+            <a class="nav-link" href="index.html"><i class="fas fa-wrench"></i> Builder</a>
+            <a class="nav-link active" href="my-builds.html"><i class="fas fa-folder"></i> My Builds</a>
+            <a class="nav-link" href="#compare" onclick="openCompareModal(); return false;"><i class="fas fa-balance-scale"></i> Compare</a>
+            <a class="nav-link" href="#autobuild" onclick="openAutoBuildModal(); return false;"><i class="fas fa-magic"></i> Auto Build</a>
+          </nav>
+        </div>
+        
+        <div class="header-actions">
+          <button class="dark-mode-toggle" id="darkModeToggle" type="button">
+            <i class="fas fa-moon"></i> Dark Mode
+          </button>
+          
+          <div class="user-info" id="userInfo">
+            <div class="user-menu">
+              <span class="user-name" id="userNameDisplay" onclick="toggleUserMenu()">
+                <span id="userNameText">User</span>
+                <i class="fas fa-chevron-down"></i>
+              </span>
+              <div class="user-menu-content" id="userMenuContent">
+                <a class="user-menu-item" href="admin.html" id="adminPanelBtn" style="display: none;">
+                  <i class="fas fa-crown"></i> Admin Panel
+                </a>
+                <button class="user-menu-item" type="button" onclick="open2FASetup()">
+                  <i class="fas fa-shield-alt"></i> Security Settings
+                </button>
+                <a class="user-menu-item" href="my-builds.html">
+                  <i class="fas fa-folder"></i> My Builds
+                </a>
+                <button class="user-menu-item" type="button" onclick="showFavorites()">
+                  <i class="fas fa-heart"></i> Favorites
+                </button>
+                <button class="user-menu-item" type="button" onclick="handleLogout()">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <button class="auth-btn" id="authBtn" type="button" onclick="openAuthModal()">
+            <i class="fas fa-user"></i> Sign In
+          </button>
+        </div>
+      </div>
+    </header>
+    
+    <main class="main-layout">
+      <!-- Sidebar - Same as index.html -->
+      <aside class="sidebar" aria-label="Categories">
+        <h3 style="margin-bottom: 15px; color: var(--text);">CATEGORIES</h3>
+        
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=cpu'">🖥️ Processors</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=gpu'">🎮 Graphics Cards</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=motherboard'">🔧 Motherboards</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=ram'">💾 RAM</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=ssd'">💽 SSDs</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=hdd'">💿 HDDs</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=psu'">⚡ Power Supplies</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=case'">📦 PC Cases</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=monitor'">🖥️ Monitors</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=keyboard'">⌨️ Keyboards</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=mouse'">🖱️ Mice</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?category=fan'">🌀 Case Fans</button>
+        <button class="category-item" type="button" onclick="window.location.href='index.html?tab=overview'">📋 Overview</button>
+        
+        <div style="margin-top: 16px; color: var(--text-secondary); font-size: 0.9rem;">
+          Tip: click a category to go to Builder
+        </div>
+      </aside>
+      
+      <!-- Main Content - My Builds -->
+      <section class="main-content" id="mainContent" aria-label="My Builds">
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h1 class="page-title">My Builds</h1>
+            <p class="page-subtitle">
+              <i class="fas fa-info-circle"></i>
+              If you are logged in, builds are saved to your account (database). If you are not logged in, builds are saved locally in this browser. Export/Import lets you move builds between devices.
+            </p>
+          </div>
+        </div>
+        
+        <div class="builds-toolbar">
+          <input type="text" id="searchInput" class="toolbar-search" placeholder="Search builds by name..." />
+          <input type="file" id="importFile" accept=".json" style="display: none;" />
+          <button class="btn btn--primary" id="importBtn" type="button">
+            <i class="fas fa-file-import"></i> Import
+          </button>
+          <button class="btn btn--danger" id="clearAllBuildsBtn" type="button">
+            <i class="fas fa-trash"></i> Clear All
+          </button>
+        </div>
+        
+        <div id="buildsGrid" class="builds-grid"></div>
+        
+        <div id="emptyState" style="text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: 16px; border: 2px dashed var(--border);">
+          <i class="fas fa-folder-open" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+          <h3 style="margin-bottom: 10px;">No saved builds yet</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">Go to the Builder page, select parts, then click <strong>Save Build</strong>.</p>
+          <a href="index.html" class="btn btn--primary">
+            <i class="fas fa-wrench"></i> Go to Builder
+          </a>
+        </div>
+      </section>
+      
+      <!-- Right Sidebar - Build Tips -->
+      <aside class="build-sidebar" style="background: var(--card-bg);">
+        <h2 style="margin-bottom: 20px; color: var(--text);">Build Tips</h2>
+        
+        <div style="margin-bottom: 20px; padding: 15px; background: var(--hover); border-radius: 12px;">
+          <h3 style="margin-bottom: 10px;"><i class="fas fa-save" style="color: var(--primary);"></i> Saving Builds</h3>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">
+            • <strong>Logged in:</strong> Builds saved to your account<br>
+            • <strong>Guest:</strong> Builds saved in this browser<br>
+            • <strong>Export:</strong> Download as JSON file<br>
+            • <strong>Import:</strong> Load builds from JSON
+          </p>
+        </div>
+        
+        <div style="margin-bottom: 20px; padding: 15px; background: var(--hover); border-radius: 12px;">
+          <h3 style="margin-bottom: 10px;"><i class="fas fa-lightbulb" style="color: var(--accent-warm);"></i> Quick Actions</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a href="index.html" class="btn btn--primary" style="justify-content: center;">
+              <i class="fas fa-plus"></i> New Build
+            </a>
+            <button class="btn" onclick="document.getElementById('importFile').click();" style="justify-content: center;">
+              <i class="fas fa-file-import"></i> Import Build
+            </button>
+            <button class="btn btn--danger" onclick="if(confirm('Delete ALL builds?')) clearAllBuilds();" style="justify-content: center;">
+              <i class="fas fa-trash"></i> Clear All
+            </button>
+          </div>
+        </div>
+        
+        <div style="padding: 15px; background: linear-gradient(135deg, var(--primary-light), var(--primary)); border-radius: 12px; color: white;">
+          <h3 style="margin-bottom: 8px;"><i class="fas fa-rocket"></i> Pro Tip</h3>
+          <p style="font-size: 0.9rem; opacity: 0.9;">
+            You can share your builds by exporting them as JSON files and importing on another device!
+          </p>
+        </div>
+      </aside>
+    </main>
+  </div>
+  
+  <!-- Modals (same as index.html) -->
+  <div class="auth-modal" id="authModal" role="dialog" aria-modal="true" aria-label="BuildMatrix Account">
+    <div class="auth-modal-content">
+      <button class="close-auth" id="closeAuth" type="button" aria-label="Close">&times;</button>
+      <h2 style="margin-bottom: 20px; color: var(--text);">BuildMatrix Account</h2>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="loginTabBtn" type="button" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab" id="registerTabBtn" type="button" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      
+      <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <input type="email" id="loginEmail" placeholder="Email" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
+        </div>
+        
+        <div class="twofa-input" id="twofaInput">
+          <label for="login2faCode">Two-Factor Authentication Code</label>
+          <input type="text" id="login2faCode" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+          <small>Enter the code from Google Authenticator</small>
+        </div>
+        
+        <div class="forgot-password-link">
+          <button type="button" onclick="openForgotPassword()">Forgot Password?</button>
+        </div>
+        
+        <button type="submit" class="auth-submit">Login</button>
+        
+        <div class="auth-footer">
+          Don't have an account?
+          <button type="button" class="switch-auth" onclick="switchAuthTab('register')">Register</button>
+        </div>
+      </form>
+      
+      <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <input type="text" id="registerName" placeholder="Full Name" autocomplete="name" required />
+        </div>
+        <div class="form-group">
+          <input type="email" id="registerEmail" placeholder="Email" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="registerPassword" placeholder="Password (min. 6 characters)" autocomplete="new-password" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="registerConfirm" placeholder="Confirm Password" autocomplete="new-password" required />
+        </div>
+        <button type="submit" class="auth-submit">Register</button>
+        
+        <div class="auth-footer">
+          Already have an account?
+          <button type="button" class="switch-auth" onclick="switchAuthTab('login')">Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="forgot-modal" id="forgotPasswordModal" role="dialog" aria-modal="true" aria-label="Reset Password">
+    <div class="forgot-modal-content">
+      <button class="close-forgot" id="closeForgot" type="button" aria-label="Close">&times;</button>
+      <h2 style="margin-bottom: 20px;">Reset Password</h2>
+      
+      <div id="forgotStep1" class="forgot-step active">
+        <p style="margin-bottom: 15px;">Enter your email to receive a reset link:</p>
+        <div class="form-group">
+          <input type="email" id="resetEmail" placeholder="Your email" autocomplete="email" required />
+        </div>
+        <button type="button" class="auth-submit" onclick="sendResetLink()">Send Reset Link</button>
+      </div>
+      
+      <div id="forgotStep2" class="forgot-step">
+        <p style="margin-bottom: 15px;">Enter the code from your email:</p>
+        <div class="form-group">
+          <input type="text" id="resetToken" placeholder="Reset code" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="newPassword" placeholder="New password" autocomplete="new-password" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="confirmPassword" placeholder="Confirm password" autocomplete="new-password" required />
+        </div>
+        <button type="button" class="auth-submit" onclick="resetPassword()">Reset Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2FA Setup Modal -->
+  <div class="twofa-modal" id="twofaSetupModal" role="dialog" aria-modal="true" aria-label="Setup Two-Factor Authentication">
+    <div class="twofa-modal-content">
+      <button class="close-twofa" id="closeTwofa" type="button" aria-label="Close">&times;</button>
+      <h2 style="margin-bottom: 20px;">Setup Two-Factor Authentication</h2>
+      
+      <div id="twofaStep1">
+        <p>Scan this QR code with Google Authenticator:</p>
+        <div class="qr-code-container" id="qrCodeContainer"></div>
+        <p>Or enter this code manually:</p>
+        <div class="manual-secret" id="manualSecret">XXXX XXXX XXXX</div>
+        
+        <div class="form-group">
+          <label for="twofaVerifyCode">Enter the 6-digit code from the app:</label>
+          <input type="text" id="twofaVerifyCode" placeholder="123456" maxlength="6" inputmode="numeric" />
+        </div>
+        <button type="button" class="auth-submit" onclick="verifyAndEnable2FA()">Verify &amp; Enable</button>
+      </div>
+      
+      <div id="twofaStep2" style="display: none;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--success);"></i>
+        </div>
+        <h3 style="text-align: center; margin-bottom: 15px;">2FA Enabled Successfully!</h3>
+        <p style="margin-bottom: 15px;">Save these recovery codes in a safe place.</p>
+        <div class="recovery-codes" id="recoveryCodesList"></div>
+        <button type="button" class="auth-submit" onclick="closeTwofaModal()">I've Saved Them</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compare Modal -->
+  <div class="bm-modal" id="compareModal" role="dialog" aria-modal="true" aria-label="Compare Parts" style="display:none;">
+    <div class="bm-modal-content">
+      <button class="bm-modal-close" type="button" onclick="closeCompareModal()" aria-label="Close">&times;</button>
+      <h2 style="margin:0 0 10px;">Compare Parts</h2>
+      <p style="margin:0 0 14px; opacity:.8;">Compare two CPUs or two GPUs (includes real PassMark + value score).</p>
+      
+      <div class="bm-form-row">
+        <label class="bm-label">Type</label>
+        <select id="bmCompareType" class="bm-input">
+          <option value="cpu">CPU</option>
+          <option value="gpu">GPU</option>
+          <option value="ram">RAM</option>
+          <option value="ssd">SSD</option>
+          <option value="psu">PSU</option>
+        </select>
+      </div>
+      
+      <div class="bm-2col">
+        <div>
+          <label class="bm-label">Part A</label>
+          <select id="bmCompareA" class="bm-input"></select>
+        </div>
+        <div>
+          <label class="bm-label">Part B</label>
+          <select id="bmCompareB" class="bm-input"></select>
+        </div>
+      </div>
+      
+      <div id="bmTemplateRow" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+        <button class="dark-mode-toggle" type="button" onclick="applyTemplate('school')">₱30k School</button>
+        <button class="dark-mode-toggle" type="button" onclick="applyTemplate('gaming')">₱50k Gaming</button>
+        <button class="dark-mode-toggle" type="button" onclick="applyTemplate('creator')">₱80k Creator</button>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="save-build-btn" type="button" onclick="runCompare()"><i class="fas fa-play"></i> Compare</button>
+        <button class="dark-mode-toggle" type="button" onclick="swapCompare()"><i class="fas fa-exchange-alt"></i> Swap</button>
+      </div>
+      
+      <div id="bmCompareResult" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- Auto Build Modal -->
+  <div class="bm-modal" id="autoBuildModal" role="dialog" aria-modal="true" aria-label="Auto Build" style="display:none;">
+    <div class="bm-modal-content">
+      <button class="bm-modal-close" type="button" onclick="closeAutoBuildModal()" aria-label="Close">&times;</button>
+      <h2 style="margin:0 0 10px;">Auto Build Generator</h2>
+      <p style="margin:0 0 14px; opacity:.8;">Choose a budget + purpose. BuildMatrix will suggest a compatible parts list.</p>
+      
+      <div class="bm-2col">
+        <div>
+          <label class="bm-label">Budget (₱)</label>
+          <input id="bmBudget" class="bm-input" type="number" value="50000" min="10000" step="1000" />
+        </div>
+        <div>
+          <label class="bm-label">Purpose</label>
+          <select id="bmPurpose" class="bm-input">
+            <option value="gaming">Gaming</option>
+            <option value="school">School / Office</option>
+            <option value="editing">Editing / Rendering</option>
+            <option value="streaming">Streaming</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="bm-form-row">
+        <label class="bm-label">Preference</label>
+        <select id="bmPreference" class="bm-input">
+          <option value="balanced">Balanced</option>
+          <option value="gpu">More GPU</option>
+          <option value="cpu">More CPU</option>
+          <option value="value">Best Value</option>
+        </select>
+      </div>
+      
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="save-build-btn" type="button" onclick="generateAutoBuild()"><i class="fas fa-bolt"></i> Generate</button>
+        <button class="dark-mode-toggle" type="button" id="bmApplyBuildBtn" onclick="applyAutoBuild()" disabled><i class="fas fa-check"></i> Apply to Build</button>
+      </div>
+      
+      <div id="bmAutoBuildResult" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Admin button visibility
+    async function checkAndShowAdminButton() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const adminBtn = document.getElementById('adminPanelBtn');
+        
+        if (!adminBtn) return;
+        
+        if (!user) {
+          adminBtn.style.display = 'none';
+          return;
+        }
+
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.success && data.is_admin) {
+          adminBtn.style.display = 'flex';
+        } else {
+          adminBtn.style.display = 'none';
+        }
+      } catch (err) {
+        console.log('Error checking admin status');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initDarkModeToggle();
+      updateAuthUI();
+      initUserMenuAutoClose();
+      checkAndShowAdminButton();
+    });
+  </script>
+</body>
+</html>
